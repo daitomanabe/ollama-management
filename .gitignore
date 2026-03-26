@@ -1,0 +1,5 @@
+.DS_Store
+*.log
+plain-*.json
+plain-*.log
+ollama-metal-bf16-m5-issue-draft.md

@@ -1,0 +1,51 @@
+#!/bin/zsh
+set -eu
+
+# Ollama 0.18.2 on Apple M5 Max crashes in the BF16 Metal path.
+export OLLAMA_HOST=http://127.0.0.1:11434
+export OLLAMA_MODELS="${HOME}/.ollama/models"
+export OLLAMA_FLASH_ATTENTION=1
+export OLLAMA_KV_CACHE_TYPE=q8_0
+export GGML_METAL_BF16_DISABLE=1
+
+HOST=127.0.0.1
+PORT=11434
+BASE_URL="http://${HOST}:${PORT}"
+
+set +e
+LISTENER_LINE=$(lsof -nP -iTCP:${PORT} -sTCP:LISTEN 2>/dev/null | sed -n '2p')
+set -e
+
+if [[ -n "${LISTENER_LINE}" ]]; then
+  EXISTING_CMD=$(print -r -- "${LISTENER_LINE}" | awk '{print $1}')
+  EXISTING_PID=$(print -r -- "${LISTENER_LINE}" | awk '{print $2}')
+
+  set +e
+  HTTP_CODE=$(curl -s --max-time 2 -o /dev/null -w '%{http_code}' "${BASE_URL}/" 2>/dev/null)
+  set -e
+
+  if [[ "${EXISTING_CMD}" == "ollama" && "${HTTP_CODE}" == "200" ]]; then
+    echo "Ollama is already running on ${BASE_URL} (pid ${EXISTING_PID})."
+    exit 0
+  fi
+
+  if [[ "${EXISTING_CMD}" == "ollama" ]]; then
+    echo "Found an unresponsive ollama listener on ${BASE_URL} (pid ${EXISTING_PID}); restarting it."
+    kill "${EXISTING_PID}"
+    sleep 2
+
+    set +e
+    STILL_BOUND=$(lsof -nP -iTCP:${PORT} -sTCP:LISTEN 2>/dev/null | sed -n '2p')
+    set -e
+
+    if [[ -n "${STILL_BOUND}" ]]; then
+      echo "Port ${PORT} is still in use after stopping pid ${EXISTING_PID}."
+      exit 1
+    fi
+  else
+    echo "Port ${PORT} is already in use by ${EXISTING_CMD} (pid ${EXISTING_PID}); not starting another Ollama server."
+    exit 1
+  fi
+fi
+
+exec /opt/homebrew/bin/ollama serve
