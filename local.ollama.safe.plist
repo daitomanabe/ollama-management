@@ -22,9 +22,9 @@
   <string>{repo_path}</string>
 
   <key>StandardOutPath</key>
-  <string>{repo_path}/ollama-safe.log</string>
+  <string>{log_path}</string>
 
   <key>StandardErrorPath</key>
-  <string>{repo_path}/ollama-safe.log</string>
+  <string>{log_path}</string>
 </dict>
 </plist>

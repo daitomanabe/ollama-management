@@ -22,7 +22,7 @@ export GGML_METAL_BF16_DISABLE=1
 - `local.ollama.safe.plist`
   LaunchAgent template. It uses `{repo_path}` as a placeholder so local absolute paths are not committed.
 - `install-launchagent.zsh`
-  Generates a local LaunchAgent plist in `~/Library/LaunchAgents` with the real path for the current checkout.
+  Generates a local LaunchAgent plist in `~/Library/LaunchAgents` with the real path for the current checkout and writes logs to `~/Library/Logs`.
 
 ## Tested environment
 
